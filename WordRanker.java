@@ -1,9 +1,8 @@
 // file: WordRanker.java
 // author: Amy Jiang
 // date: June 14, 2015
-// - Calculates the alphabetical rank of a string
-// - Enter words as command line arguments
-//
+// - Returns rank number of a string out of all possible unique arrangements of its letters.
+// - Enter words as command line arguments.
 
 import java.util.*;
 
@@ -12,14 +11,15 @@ public class WordRanker {
 	public static void main(String[] args){
 		// Testing
 		String[] testWords = new String[]{"ABAB","AAAB","BAAA","QUESTION","BOOKKEEPER","NONINTUITIVENESS","ZYXWVUTSRQPONMLKJIHG"};
-		System.out.println("Test Cases:");
+		System.out.println("Examples:");
 		long sTime = System.nanoTime();
-		for(String word : testWords) System.out.printf( "%20s : %19d\n", word, rank(word));
+		for(String word : testWords) 
+			System.out.printf( "%20s : %19d\n", word, rank(word));
 		long eTime = System.nanoTime();
 		System.out.println( "Test Execution Time: " + (eTime - sTime)/1000000 + " ms\n" );
 		
 		// From input
-		System.out.println("Input Results:");
+		System.out.println("Your Input Results:");
 		if(args.length != 0){
 			long startTime = System.nanoTime();
 			for(String word : args){
@@ -42,28 +42,30 @@ public class WordRanker {
 		return calculate(chars) + rank(word.substring(1,word.length()));
 	}
 	
-	// Calculates patterns before ones starting with first letter
-	public static long calculate(char[] chars){
+	// Calculates patterns that occur before first letter
+	public static long calculate(char[] word){
 		long previous = 0;		
-		Hashtable<Character, Integer> counts = getCounts(chars);
-		ArrayList<Character> priors = getPriors(chars);
+		long dividend = factorial(word.length-1);
+		Hashtable<Character, Integer> counts = getCounts(word);
+
+		for(char c : counts.keySet())
+			if(c < word[0])
+				previous += dividend/divisor(c, counts);
 		
-		long dividend = factorial(chars.length-1);
-		for(char c : priors){
-			previous += dividend/divisor(c,counts);
-		}
 		return previous;
 	}
 	
 	public static long divisor(char c, Hashtable<Character,Integer> counts){
-		counts.put(c, counts.get(c)-1);
 		long divisor = 1;
 		Enumeration<Character> keys = counts.keys();
+		
+		counts.put(c, counts.get(c)-1); 	// Remove an instance of current letter for calculation
 		while(keys.hasMoreElements()){
 			char letter = keys.nextElement();
 			divisor *= factorial(counts.get(letter));
 		}
-		counts.put(c, counts.get(c)+1);
+		counts.put(c, counts.get(c)+1);		// Replace letter
+		
 		return divisor;
 	}
 	
@@ -71,20 +73,10 @@ public class WordRanker {
 	public static long factorial(int n){
 		long product = 1;
 		if(n == 1) return product;
-		for(int i=n; i>1; i--){
+		for(int i=n; i>1; i--)
 			product *= i;
-		}
 		return product;
 	}	
-	
-	public static ArrayList<Character> getPriors(char[] chars){
-		ArrayList<Character> priors = new ArrayList<Character>();
-		char firstLetter = chars[0];
-		for( int i=1; i<chars.length; i++ )
-			if( chars[i] < firstLetter && !priors.contains(chars[i])) 
-				priors.add(chars[i]);
-		return priors;
-	}
 	
 	// Return table of letters and their counts based on char array
 	public static Hashtable<Character, Integer> getCounts(char[] chars){
